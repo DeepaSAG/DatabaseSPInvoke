@@ -1,0 +1,161 @@
+Invoking a Stored Procedure in the database with IN/OUT Parameter
+
+Example 1:  A procedure with a single IN parameter.
+----------------------------------------------------
+
+This example illustrates how to invoke a Stored procedure with a Single IN Type Parameter
+
+PROCEDURE DEFINITION :
+----------------------
+
+CREATE OR REPLACE PROCEDURE EMP_PROC (EMP_NO IN NUMBER, HIRE_DATE IN DATE)
+IS
+BEGIN
+	INSERT INTO EMP(EMPNO,HIREDATE) VALUES (EMP_NO,HIRE_DATE);
+END;
+
+
+webMethods Flow Implementation :
+---------------------------------
+
+1. $dbAlias
+	Specify the DB Alias that you have configured in the WmDB Admin. In this example it is defined as "DBAlias1"
+
+2. $dbProc
+	Specify the database procedure name in this example "emp_proc"
+
+3. $dbProcSig
+	Specify the procedure signature. 
+	In this example 
+
+		name      : emp_no
+		sqlType   : INTEGER
+		direction : in
+
+		name	  : hire_date
+		sqlType	  : VARCHAR
+		direction : in
+
+Note: Please make sure to specify the exact name that you defined in the Input parameter in the database stored procedure definition while defining the $dbProcSig, for example, if you specify emp_no in the Stored procedure and in the $dbProcSig if you define emp_no1 it will fail.
+
+
+4. The service "services:callProcedure_IN" takes an input parameter
+
+data
+  emp_no
+  hire_date
+
+This input is mapped to the $data input parameter of the in-built service "pub.db:call"
+
+In the pub.db:call flow step, I need to configure the call as follows: 
+
+$dbAlias "DBAlias1"
+$dbProc emp_proc 
+$dbProcSig See Above 
+$data data document from above
+
+Note: When you invoke this Stored Procedure, please make sure you keep in mind about the database constraints if any. For example, EMPNO column does not allow duplicate values. 
+
+
+Example 2:  A procedure with IN and OUT parameters.
+--------------------------------------------------------
+
+This example illustrates how to invoke a Stored procedure with an IN and OUT Type Parameter
+
+PROCEDURE DEFINITION :
+------------------------
+
+CREATE OR REPLACE PROCEDURE EMP_PROC_OUT (EMP_NO IN NUMBER, EMP_NAME OUT VARCHAR)
+IS
+BEGIN
+	SELECT ENAME INTO EMP_NAME FROM EMP WHERE EMPNO = EMP_NO;
+END;
+
+
+webMethods Flow Implementation :
+-------------------------------------
+
+1. $dbAlias
+	Specify the DB Alias that you have configured in the WmDB Admin. In this example it is defined as "DBAlias1"
+
+2. $dbProc
+	Specify the database procedure name in this example "emp_proc_out"
+
+3. $dbProcSig
+	Specify the procedure signature. 
+	In this example 
+
+		name      : emp_no
+		sqlType   : INTEGER
+		direction : in
+
+Note: Please make sure to specify the exact name that you defined in the Input parameter in the database stored procedure definition while defining the $dbProcSig, for example, if you specify emp_no in the Stored procedure and in the $dbProcSig if you define emp_no1 it will fail.
+
+4. The service "services:callProcedure_INOUT" takes an input parameter
+
+data
+  emp_no
+
+This input is mapped to the $data input parameter of the in-built service "pub.db:call"
+
+In the pub.db:call flow step, I need to configure the call as follows: 
+
+$dbAlias "DBAlias1"
+$dbProc emp_proc_out
+$dbProcSig See Above 
+$data data document from above
+
+5. Getting at the OUT parameter values
+
+At run time, webMethods will have the OUT parameters in the Pipeline.  In this case, you will find emp_name out type parameter being available in the Pipeline.
+
+After your db:call step, create a MAP step.  
+
+In the Output of that MAP step, create a new String variable, name it something like the "Employee_Name" parameter. In case, if you have more than one OUT parameters, please creae appropriate OUTPUT variables.
+
+For each variable you defin, right click and choose Set Value…  Set the value to the name of the OUT parameter, surrounded by %.  Then check the Perform variable substitution box.
+
+%emp_name% (Please note when you retrieve the value from the pipeline, make sure to have the exact name that you define in the Stored Procedure Signature.
+
+
+
+Pre-requisites:
+---------------
+
+WmDB Connection Alias
+
+	In order to use this sample, you need to create a Connection Alias on the WmDB Admin page.
+
+	This sample is based on the Database Stored Procedure created in Oracle, but you can follow the same logic if you are using a different database other than Oracle.
+
+
+Package Installation Steps:
+----------------------------
+
+1. If you have not already done so, follow the pre-requisites section.
+
+2. On Windows platforms, unzip DbSamples_StoredProc.zip into
+   <webMethods_directory>\IntegrationServer.
+
+   On UNIX platforms, extract the contents of
+   DbSamples_StoredProc.zip into
+   <webMethods_directory>\IntegrationServer.
+
+   To do this, use the following jar utility:
+
+   (from the IntegrationServer directory)
+   ../jvm/<platform_jvm>/bin/jar -xvf <fix_location>
+   /DbSamples_StoredProc.zip
+   
+3. In Integration Server Administrator, in the "Packages"
+   area of the navigation panel, select "Management".
+
+4. In Integration Server Administrator, in the "Packages"
+   area of the navigation panel, select "Management".
+
+5. Click "Install Inbound Releases".
+
+6. From the "Release file name" list, select
+   "DbSamples_StoredProc.zip".
+
+7. Click "Install Release".
